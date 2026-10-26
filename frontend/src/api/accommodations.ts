@@ -30,4 +30,15 @@ export const accommodationsApi = {
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/accommodations/${id}`);
   },
+
+  async uploadImage(id: number, file: File): Promise<Accommodation> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<Accommodation>(`/accommodations/${id}/image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };

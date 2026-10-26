@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/accommodations")
@@ -77,6 +80,18 @@ public class AccommodationController {
             @Valid @RequestBody AccommodationPatchRequestDto requestDto
     ) {
         AccommodationResponseDto responseDto = accommodationService.partialUpdate(id, requestDto);
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('MANAGER')")
+    @Operation(summary = "Upload accommodation image",
+               description = "Allows managers to upload an image for an accommodation (MANAGER only)")
+    public ResponseEntity<AccommodationResponseDto> uploadImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        AccommodationResponseDto responseDto = accommodationService.uploadImage(id, file);
         return ResponseEntity.ok(responseDto);
     }
 

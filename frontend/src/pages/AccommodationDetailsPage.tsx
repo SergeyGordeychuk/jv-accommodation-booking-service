@@ -114,7 +114,7 @@ export const AccommodationDetailsPage: React.FC = () => {
     );
   }
 
-  const imageUrl = TYPE_IMAGES[accommodation.type] || TYPE_IMAGES.APARTMENT;
+  const imageUrl = accommodation.imageUrl || TYPE_IMAGES[accommodation.type] || TYPE_IMAGES.APARTMENT;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

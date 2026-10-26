@@ -8,6 +8,7 @@ export interface Accommodation {
   amenities: string | null;
   dailyRate: number;
   availability: number;
+  imageUrl?: string | null;
 }
 
 export interface AccommodationRequest {
@@ -17,6 +18,7 @@ export interface AccommodationRequest {
   amenities?: string;
   dailyRate: number;
   availability: number;
+  imageUrl?: string | null;
 }
 
 export interface AccommodationPatchRequest {
@@ -26,6 +28,7 @@ export interface AccommodationPatchRequest {
   amenities?: string;
   dailyRate?: number;
   availability?: number;
+  imageUrl?: string | null;
 }
 
 export type UserRole = 'CUSTOMER' | 'MANAGER';

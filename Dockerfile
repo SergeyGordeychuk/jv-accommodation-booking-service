@@ -15,7 +15,9 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Run as non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+    && mkdir -p /app/uploads \
+    && chown -R appuser:appgroup /app/uploads
 USER appuser
 
 COPY --from=builder /build/target/*.jar app.jar

@@ -34,8 +34,11 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      UPLOAD_DIR: /app/uploads
     ports:
       - "8080:8080"
+    volumes:
+      - uploads_data:/app/uploads
     restart: unless-stopped
 
   frontend:
@@ -49,3 +52,4 @@ services:
 
 volumes:
   mysql_data:
+  uploads_data:

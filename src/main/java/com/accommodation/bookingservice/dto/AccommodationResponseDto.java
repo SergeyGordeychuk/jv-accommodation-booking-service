@@ -12,4 +12,5 @@ public class AccommodationResponseDto {
     private String amenities;
     private BigDecimal dailyRate;
     private Integer availability;
+    private String imageUrl;
 }

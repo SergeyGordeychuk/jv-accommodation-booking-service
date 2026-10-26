@@ -22,7 +22,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation }) => {
-  const imageUrl = TYPE_IMAGES[accommodation.type] || TYPE_IMAGES.APARTMENT;
+  const imageUrl = accommodation.imageUrl || TYPE_IMAGES[accommodation.type] || TYPE_IMAGES.APARTMENT;
   const label = TYPE_LABELS[accommodation.type] || accommodation.type;
 
   return (

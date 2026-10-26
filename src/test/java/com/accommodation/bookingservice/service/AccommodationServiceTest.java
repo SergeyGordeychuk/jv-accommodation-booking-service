@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 class AccommodationServiceTest {
@@ -33,6 +35,8 @@ class AccommodationServiceTest {
     private AccommodationMapper accommodationMapper;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private ImageStorageService imageStorageService;
 
     @InjectMocks
     private AccommodationService accommodationService;
@@ -153,6 +157,7 @@ class AccommodationServiceTest {
         Accommodation accommodation = new Accommodation();
         accommodation.setId(1L);
         accommodation.setLocation("Kyiv");
+        accommodation.setImageUrl("/uploads/test.jpg");
 
         when(accommodationRepository.findById(1L)).thenReturn(Optional.of(accommodation));
         doNothing().when(accommodationRepository).deleteById(1L);
@@ -160,6 +165,7 @@ class AccommodationServiceTest {
         accommodationService.delete(1L);
 
         verify(accommodationRepository).deleteById(1L);
+        verify(imageStorageService).delete("/uploads/test.jpg");
         verify(notificationService).sendNotification(org.mockito.ArgumentMatchers.anyString());
     }
 
@@ -169,5 +175,39 @@ class AccommodationServiceTest {
         when(accommodationRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> accommodationService.delete(99L));
+    }
+
+    @Test
+    @DisplayName("uploadImage: stores new file and updates accommodation")
+    void uploadImageStoresNewFileAndUpdatesEntity() {
+        MultipartFile file = mock(MultipartFile.class);
+        Accommodation accommodation = new Accommodation();
+        accommodation.setId(1L);
+        accommodation.setImageUrl("/uploads/old.jpg");
+
+        AccommodationResponseDto responseDto = new AccommodationResponseDto();
+        responseDto.setId(1L);
+        responseDto.setImageUrl("/uploads/new.jpg");
+
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(accommodation));
+        when(imageStorageService.store(file)).thenReturn("/uploads/new.jpg");
+        when(accommodationRepository.save(accommodation)).thenReturn(accommodation);
+        when(accommodationMapper.toDto(accommodation)).thenReturn(responseDto);
+
+        AccommodationResponseDto actual = accommodationService.uploadImage(1L, file);
+
+        assertNotNull(actual);
+        assertEquals("/uploads/new.jpg", actual.getImageUrl());
+        verify(imageStorageService).delete("/uploads/old.jpg");
+        verify(accommodationRepository).save(accommodation);
+    }
+
+    @Test
+    @DisplayName("uploadImage: throws exception when accommodation not found")
+    void uploadImageThrowsExceptionWhenAccommodationNotFound() {
+        MultipartFile file = mock(MultipartFile.class);
+        when(accommodationRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> accommodationService.uploadImage(99L, file));
     }
 }

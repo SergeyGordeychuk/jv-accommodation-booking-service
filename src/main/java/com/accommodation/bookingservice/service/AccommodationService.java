@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
     private final NotificationService notificationService;
+    private final ImageStorageService imageStorageService;
 
     @Transactional
     public AccommodationResponseDto create(AccommodationRequestDto requestDto) {
@@ -74,12 +76,35 @@ public class AccommodationService {
     }
 
     @Transactional
+    public AccommodationResponseDto uploadImage(Long id, MultipartFile file) {
+        Accommodation accommodation = accommodationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Accommodation not found with id: " + id
+                ));
+
+        String oldImageUrl = accommodation.getImageUrl();
+        String newImageUrl = imageStorageService.store(file);
+        accommodation.setImageUrl(newImageUrl);
+        Accommodation savedAccommodation = accommodationRepository.save(accommodation);
+
+        if (oldImageUrl != null && !oldImageUrl.equals(newImageUrl)) {
+            imageStorageService.delete(oldImageUrl);
+        }
+
+        return accommodationMapper.toDto(savedAccommodation);
+    }
+
+    @Transactional
     public void delete(Long id) {
         Accommodation accommodation = accommodationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Accommodation not found with id: " + id
                 ));
+        String imageUrl = accommodation.getImageUrl();
         accommodationRepository.deleteById(id);
+        if (imageUrl != null) {
+            imageStorageService.delete(imageUrl);
+        }
         notificationService.sendNotification(String.format(
                 "🗑️ Accommodation Released/Removed! ID: %d, Location: %s",
                 accommodation.getId(),

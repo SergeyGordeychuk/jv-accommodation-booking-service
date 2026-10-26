@@ -32,4 +32,7 @@ public class AccommodationRequestDto {
     @NotNull(message = "Availability cannot be null")
     @Min(value = 0, message = "Availability cannot be negative")
     private Integer availability;
+
+    @Size(max = 1000, message = "Image URL must not exceed 1000 characters")
+    private String imageUrl;
 }

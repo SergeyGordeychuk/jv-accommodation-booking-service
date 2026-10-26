@@ -42,6 +42,9 @@ public class Accommodation {
     @Column(nullable = false)
     private Integer availability;
 
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
+
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 

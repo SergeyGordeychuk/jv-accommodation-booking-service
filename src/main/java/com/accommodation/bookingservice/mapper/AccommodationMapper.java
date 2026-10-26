@@ -21,6 +21,7 @@ public interface AccommodationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "imageUrl", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromDto(AccommodationRequestDto requestDto,
                            @MappingTarget Accommodation accommodation);
 
