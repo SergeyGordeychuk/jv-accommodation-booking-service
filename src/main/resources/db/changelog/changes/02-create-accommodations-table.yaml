@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-accommodations-table
+      author: booking-service
+      changes:
+        - createTable:
+            tableName: accommodations
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: location
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: size
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amenities
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: daily_rate
+                  type: DECIMAL(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: availability
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_accommodations_type
+            tableName: accommodations
+            columns:
+              - column:
+                  name: type
