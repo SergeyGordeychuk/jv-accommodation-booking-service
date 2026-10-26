@@ -26,7 +26,7 @@ export const AccommodationsPage: React.FC = () => {
       const data = await accommodationsApi.getAll();
       setAccommodations(data);
     } catch {
-      setError('Не вдалося завантажити список житла. Перевірте, чи запущений бекенд-сервер на http://localhost:8080.');
+      setError('Не вдалося завантажити список житла. Спробуйте оновити сторінку.');
     } finally {
       setLoading(false);
     }

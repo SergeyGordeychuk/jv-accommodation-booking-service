@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
 
   const fillAdmin = () => {
     setEmail('admin@booking.com');
-    setPassword('admin12345');
+    setPassword('admin1234');
   };
 
   return (
