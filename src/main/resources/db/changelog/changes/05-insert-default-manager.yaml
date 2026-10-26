@@ -17,7 +17,7 @@ databaseChangeLog:
                   value: "Manager"
               - column:
                   name: password
-                  value: "$2a$10$gEE0uYPz6/WP9FN89uO4q.xevQoNwwcRf26Wl5PaMczoQS6Z3Uv/C"
+                  value: "$2a$10$5LPcAJFr4R4gQG1nFPMmw.tqLdAT.BMqUOwgVFknWqWTluLOx2wVi"
               - column:
                   name: role
                   value: "MANAGER"
