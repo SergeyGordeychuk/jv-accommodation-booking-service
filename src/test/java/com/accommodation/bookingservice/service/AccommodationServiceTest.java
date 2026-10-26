@@ -13,6 +13,7 @@ import com.accommodation.bookingservice.dto.AccommodationResponseDto;
 import com.accommodation.bookingservice.exception.EntityNotFoundException;
 import com.accommodation.bookingservice.mapper.AccommodationMapper;
 import com.accommodation.bookingservice.model.Accommodation;
+import com.accommodation.bookingservice.notification.NotificationService;
 import com.accommodation.bookingservice.repository.AccommodationRepository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,6 +31,8 @@ class AccommodationServiceTest {
     private AccommodationRepository accommodationRepository;
     @Mock
     private AccommodationMapper accommodationMapper;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private AccommodationService accommodationService;
@@ -147,18 +150,23 @@ class AccommodationServiceTest {
     @Test
     @DisplayName("delete: existing id deletes accommodation")
     void deleteExistingIdDeletesSuccessfully() {
-        when(accommodationRepository.existsById(1L)).thenReturn(true);
+        Accommodation accommodation = new Accommodation();
+        accommodation.setId(1L);
+        accommodation.setLocation("Kyiv");
+
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(accommodation));
         doNothing().when(accommodationRepository).deleteById(1L);
 
         accommodationService.delete(1L);
 
         verify(accommodationRepository).deleteById(1L);
+        verify(notificationService).sendNotification(org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test
     @DisplayName("delete: non-existing id throws EntityNotFoundException")
     void deleteNonExistingIdThrowsException() {
-        when(accommodationRepository.existsById(99L)).thenReturn(false);
+        when(accommodationRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> accommodationService.delete(99L));
     }

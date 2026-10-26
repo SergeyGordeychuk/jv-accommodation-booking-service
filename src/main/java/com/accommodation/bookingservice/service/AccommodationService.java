@@ -6,6 +6,7 @@ import com.accommodation.bookingservice.dto.AccommodationResponseDto;
 import com.accommodation.bookingservice.exception.EntityNotFoundException;
 import com.accommodation.bookingservice.mapper.AccommodationMapper;
 import com.accommodation.bookingservice.model.Accommodation;
+import com.accommodation.bookingservice.notification.NotificationService;
 import com.accommodation.bookingservice.repository.AccommodationRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,11 +19,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public AccommodationResponseDto create(AccommodationRequestDto requestDto) {
         Accommodation accommodation = accommodationMapper.toEntity(requestDto);
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
+        notificationService.sendNotification(String.format(
+                "🏠 New Accommodation Created! ID: %d, Type: %s, Location: %s, Daily Rate: $%s",
+                savedAccommodation.getId(),
+                savedAccommodation.getType(),
+                savedAccommodation.getLocation(),
+                savedAccommodation.getDailyRate()
+        ));
         return accommodationMapper.toDto(savedAccommodation);
     }
 
@@ -66,9 +75,15 @@ public class AccommodationService {
 
     @Transactional
     public void delete(Long id) {
-        if (!accommodationRepository.existsById(id)) {
-            throw new EntityNotFoundException("Accommodation not found with id: " + id);
-        }
+        Accommodation accommodation = accommodationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Accommodation not found with id: " + id
+                ));
         accommodationRepository.deleteById(id);
+        notificationService.sendNotification(String.format(
+                "🗑️ Accommodation Released/Removed! ID: %d, Location: %s",
+                accommodation.getId(),
+                accommodation.getLocation()
+        ));
     }
 }

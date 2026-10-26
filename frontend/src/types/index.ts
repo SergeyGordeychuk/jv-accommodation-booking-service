@@ -55,6 +55,43 @@ export interface UserRegistrationRequest {
   repeatPassword: string;
 }
 
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'EXPIRED';
+
+export interface Booking {
+  id: number;
+  checkInDate: string;
+  checkOutDate: string;
+  accommodationId: number;
+  userId: number;
+  status: BookingStatus;
+}
+
+export interface BookingRequest {
+  checkInDate: string;
+  checkOutDate: string;
+  accommodationId: number;
+}
+
+export interface BookingUpdate {
+  checkInDate: string;
+  checkOutDate: string;
+}
+
+export type PaymentStatus = 'PENDING' | 'PAID' | 'EXPIRED';
+
+export interface Payment {
+  id: number;
+  status: PaymentStatus;
+  bookingId: number;
+  sessionUrl: string;
+  sessionId: string;
+  amountToPay: number;
+}
+
+export interface PaymentRequest {
+  bookingId: number;
+}
+
 export interface ApiError {
   status: number;
   error?: string;

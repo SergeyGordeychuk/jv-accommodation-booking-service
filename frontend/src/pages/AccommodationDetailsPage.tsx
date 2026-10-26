@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BedDouble, Calendar, CheckCircle2, DollarSign, MapPin, ShieldAlert, Sparkles } from 'lucide-react';
+import { ArrowLeft, BedDouble, Calendar, CheckCircle2, DollarSign, ExternalLink, MapPin, ShieldAlert, Sparkles } from 'lucide-react';
 import { accommodationsApi } from '../api/accommodations';
+import { bookingsApi } from '../api/bookings';
+import { paymentsApi } from '../api/payments';
 import { useAuth } from '../context/AuthContext';
-import type { Accommodation } from '../types';
+import type { Accommodation, Booking, Payment } from '../types';
 
 const TYPE_IMAGES: Record<string, string> = {
   HOUSE: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80',
@@ -26,7 +28,10 @@ export const AccommodationDetailsPage: React.FC = () => {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
   const [checkIn, setCheckIn] = useState<string>(today);
   const [checkOut, setCheckOut] = useState<string>(tomorrow);
-  const [bookingSuccess, setBookingSuccess] = useState<boolean>(false);
+  const [bookingLoading, setBookingLoading] = useState<boolean>(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
+  const [paymentSession, setPaymentSession] = useState<Payment | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -55,13 +60,39 @@ export const AccommodationDetailsPage: React.FC = () => {
   const nights = calculateNights();
   const totalPrice = accommodation ? nights * Number(accommodation.dailyRate) : 0;
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    // Simulation / placeholder for booking action
-    setBookingSuccess(true);
+    if (!accommodation) return;
+
+    try {
+      setBookingLoading(true);
+      setBookingError(null);
+
+      const booking = await bookingsApi.create({
+        accommodationId: accommodation.id,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+      });
+      setCreatedBooking(booking);
+
+      try {
+        const payment = await paymentsApi.createPaymentSession({
+          bookingId: booking.id,
+        });
+        setPaymentSession(payment);
+      } catch (payErr: unknown) {
+        console.warn('Could not auto-generate payment session', payErr);
+      }
+    } catch (err: unknown) {
+      const responseData = (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      const msg = responseData?.message || responseData?.error || 'Помилка при створенні бронювання';
+      setBookingError(msg);
+    } finally {
+      setBookingLoading(false);
+    }
   };
 
   if (loading) {
@@ -167,22 +198,58 @@ export const AccommodationDetailsPage: React.FC = () => {
           <div className="sticky top-24 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-lg space-y-6">
             <h2 className="text-xl font-bold text-slate-900">Бронювання</h2>
 
-            {bookingSuccess ? (
+            {createdBooking ? (
               <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl text-center space-y-3">
                 <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <h4 className="font-bold text-emerald-900">Запит на бронювання створено!</h4>
-                <p className="text-xs text-emerald-700">
-                  Ви обрали {nights} ночей за ${totalPrice.toFixed(2)}. Очікуйте підтвердження менеджером.
+                <h4 className="font-bold text-emerald-900">Бронювання #{createdBooking.id} створено!</h4>
+                <p className="text-xs text-emerald-700 leading-relaxed">
+                  Дати: <span className="font-semibold">{createdBooking.checkInDate}</span> — <span className="font-semibold">{createdBooking.checkOutDate}</span> ({nights} {nights === 1 ? 'ніч' : 'ночей'}).
+                  <br />
+                  Статус: <span className="font-bold uppercase tracking-wider">{createdBooking.status}</span>
                 </p>
-                <button
-                  onClick={() => setBookingSuccess(false)}
-                  className="text-xs font-semibold text-emerald-800 underline"
-                >
-                  Змінити дати
-                </button>
+
+                {paymentSession?.sessionUrl && (
+                  <div className="pt-2">
+                    <a
+                      href={paymentSession.sessionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow transition flex items-center justify-center gap-2"
+                    >
+                      <span>Оплатити карткою (${paymentSession.amountToPay})</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <span className="text-[10px] text-slate-500 block mt-1">Безпечна оплата через Stripe Checkout</span>
+                  </div>
+                )}
+
+                <div className="pt-2 flex items-center justify-center gap-4">
+                  <Link
+                    to="/profile"
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+                  >
+                    Перейти до моїх бронювань
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setCreatedBooking(null);
+                      setPaymentSession(null);
+                    }}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline"
+                  >
+                    Нове бронювання
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
+                {bookingError && (
+                  <div className="p-3 bg-rose-50 text-rose-700 text-xs rounded-xl flex items-center gap-2 font-medium border border-rose-200">
+                    <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>{bookingError}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-indigo-500" />
@@ -230,9 +297,16 @@ export const AccommodationDetailsPage: React.FC = () => {
                 {accommodation.availability > 0 ? (
                   <button
                     onClick={handleBook}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
+                    disabled={bookingLoading}
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <span>{isAuthenticated ? 'Забронювати зараз' : 'Увійти для бронювання'}</span>
+                    <span>
+                      {bookingLoading
+                        ? 'Бронювання...'
+                        : isAuthenticated
+                        ? 'Забронювати зараз'
+                        : 'Увійти для бронювання'}
+                    </span>
                   </button>
                 ) : (
                   <div className="p-3 bg-rose-50 text-rose-700 text-xs rounded-xl flex items-center gap-2 font-medium">
@@ -248,3 +322,4 @@ export const AccommodationDetailsPage: React.FC = () => {
     </div>
   );
 };
+
